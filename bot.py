@@ -1,28 +1,21 @@
 from telegram import Bot
-from telegram.ext import messagequeue as mq
+from telegram.ext import Updater
+from telegram.ext import Dispatcher
 
 from config import TG_TOKEN
 
 
-class MQBot(Bot):
-    def __init__(self, *args, is_queued_def=True, mqueue=None, **kwargs):
-        super(MQBot, self).__init__(*args, **kwargs)
-        self._is_messages_queued_default = is_queued_def
-        self._msg_queue = mqueue or mq.MessageQueue()
+class TelegramBot:
+    def __init__(self, tg_token):
+        self.tg_token = tg_token
 
-    def __del__(self):
-        try:
-            self._msg_queue.stop()
-        except Exception as e:
-            pass
+        self.updater = Updater(self.tg_token, workers=4, use_context=True)
+        self.dispatcher = self.updater.dispatcher
+        self.__last = None
+        self.__last_time = None
 
-    @mq.queuedmessage
-    def send_message(self, *args, **kwargs):
-        return super(MQBot, self).send_message(*args, **kwargs)
+    def run(self):
+        self.updater.start_polling()
+        self.updater.idle()
 
-    @mq.queuedmessage
-    def send_photo(self, *args, **kwargs):
-        return super(MQBot, self).send_photo(*args, **kwargs)
-
-
-bot = MQBot(TG_TOKEN)
+bot = TelegramBot(TG_TOKEN)
